@@ -1,0 +1,53 @@
+name: Email Bot
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # every 30 min
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+
+      - name: Setup GPG
+        run: |
+          echo "${{ secrets.GPG_PUBLIC_KEYS }}" | gpg --import
+
+      - name: Run email bot
+        env:
+          API_ID: ${{ secrets.API_ID }}
+          API_HASH: ${{ secrets.API_HASH }}
+          SESSION: ${{ secrets.SESSION }}
+
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+
+          TRUSTED_FINGERPRINTS: ${{ secrets.TRUSTED_FINGERPRINTS }}
+
+          TOR_BRIDGES_BOT_USERNAME: GetBridgesBot
+          REQUEST_COMMAND: /webtunnel
+          RESPONSE_MATCH: webtunnel
+
+          MESSAGING_COOLDOWN_HOURS: 6
+          RESPONSE_TIMEOUT_SECONDS: 30
+          MAX_RESPONSE_MESSAGES: 10
+
+          IMAP_HOST: imap.mail.ru
+          IMAP_PORT: 993
+          SMTP_HOST: smtp.mail.ru
+          SMTP_PORT: 465
+
+        run: python email_bot.py
