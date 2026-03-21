@@ -7,7 +7,10 @@ from email.message import EmailMessage
 from dotenv import dotenv_values
 
 
-cfg = dotenv_values(".env.email.secret")
+cfg = {
+    **dotenv_values(".env.shared"),
+    **dotenv_values(".env.email.secret"),
+}
 
 
 def create_signed_request():
