@@ -87,16 +87,52 @@ def verify_signature(data: bytes):
     return valid, fingerprint
 
 
+def resolve_primary_fingerprint(fingerprint: str) -> str:
+    normalized = re.sub(r"[^0-9A-Fa-f]", "", fingerprint).upper()
+    if not normalized:
+        return ""
+
+    proc = subprocess.run(
+        ["gpg", "--batch", "--with-colons", "--fingerprint", "--list-keys", normalized],
+        capture_output=True,
+        text=True,
+    )
+
+    if proc.returncode != 0:
+        logging.warning("Failed to resolve primary fingerprint for %s", normalized)
+        return normalized
+
+    saw_pub = False
+    for line in proc.stdout.splitlines():
+        if not line:
+            continue
+
+        parts = line.split(":")
+        record_type = parts[0]
+        if record_type == "pub":
+            saw_pub = True
+            continue
+
+        if saw_pub and record_type == "fpr":
+            return parts[9].upper()
+
+    return normalized
+
+
 def encrypt_output(fingerprint: str, text: str):
+    recipient = resolve_primary_fingerprint(fingerprint)
+
     proc = subprocess.run(
         [
             "gpg",
             "--batch",
+            "--no-tty",
             "--yes",
             "--trust-model", "always",
             "--encrypt",
             "--armor",
-            "-r", fingerprint
+            "--output", "-",
+            "-r", recipient,
         ],
         input=text,
         capture_output=True,
@@ -104,7 +140,13 @@ def encrypt_output(fingerprint: str, text: str):
     )
 
     if proc.returncode != 0:
-        logging.error(f"GPG encryption failed for {fingerprint}")
+        logging.error(f"GPG encryption failed for {recipient}")
+        logging.error(f"GPG STDOUT: {proc.stdout}")
+        logging.error(f"GPG Stderr: {proc.stderr}")
+        return ""
+
+    if not proc.stdout.strip():
+        logging.error(f"GPG encryption returned empty output for {recipient}")
         logging.error(f"GPG STDOUT: {proc.stdout}")
         logging.error(f"GPG Stderr: {proc.stderr}")
         return ""
@@ -177,7 +219,8 @@ def process_email(settings, imap, msg_id, raw):
         logging.info("Signature invalid")
         return
 
-    if fingerprint not in settings.trusted_fingerprints:
+    normalized_fingerprint = re.sub(r"[^0-9A-Fa-f]", "", fingerprint or "").upper()
+    if normalized_fingerprint not in settings.trusted_fingerprints:
         logging.info(f"Fingerprint not trusted: {fingerprint}")
         return
 
@@ -188,7 +231,7 @@ def process_email(settings, imap, msg_id, raw):
         logging.info("No bridges returned")
         return
 
-    encrypted = encrypt_output(fingerprint, bridges)
+    encrypted = encrypt_output(normalized_fingerprint, bridges)
     logging.info(f"Encrypted output length: {len(encrypted)}")
 
     if not encrypted.strip():
