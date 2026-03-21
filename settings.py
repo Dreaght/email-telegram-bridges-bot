@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 from dotenv import dotenv_values
 
@@ -31,6 +32,7 @@ def load_settings() -> Settings:
     raw = {
         **dotenv_values(".env.shared"),
         **dotenv_values(".env.secret"),
+        **os.environ,
     }
 
     return Settings(
