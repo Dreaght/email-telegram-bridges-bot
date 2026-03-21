@@ -89,11 +89,24 @@ def verify_signature(data: bytes):
 
 def encrypt_output(fingerprint: str, text: str):
     proc = subprocess.run(
-        ["gpg", "--encrypt", "--armor", "-r", fingerprint],
+        [
+            "gpg",
+            "--batch",
+            "--yes",
+            "--trust-model", "always",
+            "--encrypt",
+            "--armor",
+            "-r", fingerprint
+        ],
         input=text,
         capture_output=True,
         text=True
     )
+
+    if proc.returncode != 0:
+        logging.error("GPG encryption failed")
+        logging.error(proc.stderr)
+
     return proc.stdout
 
 
