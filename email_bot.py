@@ -104,8 +104,10 @@ def encrypt_output(fingerprint: str, text: str):
     )
 
     if proc.returncode != 0:
-        logging.error("GPG encryption failed")
-        logging.error(proc.stderr)
+        logging.error(f"GPG encryption failed for {fingerprint}")
+        logging.error(f"GPG STDOUT: {proc.stdout}")
+        logging.error(f"GPG Stderr: {proc.stderr}")
+        return ""
 
     return proc.stdout
 
