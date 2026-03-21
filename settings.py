@@ -58,5 +58,9 @@ def load_settings() -> Settings:
         smtp_host=raw["SMTP_HOST"],
         smtp_port=int(raw["SMTP_PORT"]),
 
-        trusted_fingerprints=set(raw["TRUSTED_FINGERPRINTS"].split(",")),
+        trusted_fingerprints={
+            value.strip().upper()
+            for value in raw["TRUSTED_FINGERPRINTS"].split(",")
+            if value.strip()
+        },
     )
