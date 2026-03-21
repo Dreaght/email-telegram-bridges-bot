@@ -17,6 +17,16 @@ class Settings:
     response_timeout_seconds: int
     max_response_messages: int
 
+    email_address: str
+    email_password: str
+
+    imap_host: str
+    imap_port: int
+    smtp_host: str
+    smtp_port: int
+
+    trusted_fingerprints: set[str]
+
 def load_settings() -> Settings:
     raw = {
         **dotenv_values(".env.shared"),
@@ -37,4 +47,14 @@ def load_settings() -> Settings:
         messaging_cooldown_hours=int(raw["MESSAGING_COOLDOWN_HOURS"]),
         response_timeout_seconds=int(raw["RESPONSE_TIMEOUT_SECONDS"]),
         max_response_messages=int(raw["MAX_RESPONSE_MESSAGES"]),
+
+        email_address=raw["EMAIL_ADDRESS"],
+        email_password=raw["EMAIL_PASSWORD"],
+
+        imap_host=raw["IMAP_HOST"],
+        imap_port=int(raw["IMAP_PORT"]),
+        smtp_host=raw["SMTP_HOST"],
+        smtp_port=int(raw["SMTP_PORT"]),
+
+        trusted_fingerprints=set(raw["TRUSTED_FINGERPRINTS"].split(",")),
     )
