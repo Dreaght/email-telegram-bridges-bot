@@ -10,6 +10,7 @@ from email.utils import parsedate_to_datetime
 from email_bridge.client.config import ClientConfig
 from email_bridge.mail import extract_body, normalized_address
 from email_bridge.obfuscation.base import ObfuscationLayer
+from email_bridge.subject import random_subject
 
 
 def parse_utc_iso(value: str | None):
@@ -47,7 +48,7 @@ def save_last_sent_request_time(config: ClientConfig, sent_at: datetime):
 
 def send_email(config: ClientConfig, body: str):
     msg = EmailMessage()
-    msg["Subject"] = "req"
+    msg["Subject"] = random_subject()
     msg["From"] = config.email_address
     msg["To"] = config.bot_email
     msg.set_content(body)
@@ -242,4 +243,3 @@ def run_client(config: ClientConfig, obfuscation: ObfuscationLayer):
     print("Decrypting...")
     result = obfuscation.decrypt_response(encrypted)
     print(result)
-
