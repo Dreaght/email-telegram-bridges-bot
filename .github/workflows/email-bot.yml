@@ -22,10 +22,6 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Setup GPG
-        run: |
-          echo "${{ secrets.GPG_PUBLIC_KEYS }}" | gpg --import
-
       - name: Run email bot
         env:
           API_ID: ${{ secrets.API_ID }}
@@ -36,6 +32,8 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
 
           TRUSTED_FINGERPRINTS: ${{ secrets.TRUSTED_FINGERPRINTS }}
+          GPG_PUBLIC_KEYS: ${{ secrets.GPG_PUBLIC_KEYS }}
+          OBFUSCATION_LAYER: pgp
 
           TOR_BRIDGES_BOT_USERNAME: GetBridgesBot
           REQUEST_COMMAND: /webtunnel

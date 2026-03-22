@@ -49,6 +49,9 @@ Bot can work as an email responder:
 - Fetches bridges from Telegram
 - Sends encrypted response via SMTP
 
+The obfuscation/verification layer is modular. `OBFUSCATION_LAYER=pgp` is the built-in
+implementation; additional layers can be added under `email_bridge/obfuscation/`.
+
 ### Additional setup
 
 Add to `.env.secret`:
@@ -56,6 +59,9 @@ Add to `.env.secret`:
 - EMAIL_ADDRESS
 - EMAIL_PASSWORD
 - TRUSTED_FINGERPRINTS (comma-separated list of allowed PGP fingerprints)
+
+Optional for CI when `OBFUSCATION_LAYER=pgp`:
+- GPG_PUBLIC_KEYS (ASCII-armored public keys to import at runtime)
 
 Mail servers are configured in `.env.shared`:
 - IMAP_HOST / IMAP_PORT
@@ -89,6 +95,14 @@ Client will:
 - send signed request
 - wait for reply (polling)
 - decrypt bridges locally
+
+---
+
+## Tests
+
+Run locally (same command used in CI):
+
+`pytest -q`
 
 ---
 

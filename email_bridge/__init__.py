@@ -1,0 +1,2 @@
+"""Email bridge package."""
+
