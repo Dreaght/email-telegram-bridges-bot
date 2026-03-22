@@ -8,6 +8,7 @@ from email.message import EmailMessage
 from email_bridge.mail import extract_body, parse_email
 from email_bridge.obfuscation.base import ObfuscationLayer
 from email_bridge.obfuscation.pgp import normalize_signer_id
+from email_bridge.subject import random_subject
 from settings import load_settings
 
 
@@ -51,7 +52,7 @@ def run_telegram_parser() -> str:
 
 def send_email(settings, to_addr: str, body: str):
     msg = EmailMessage()
-    msg["Subject"] = "Re: bridges"
+    msg["Subject"] = random_subject()
     msg["From"] = settings.email_address
     msg["To"] = to_addr
     msg.set_content(body)
@@ -130,4 +131,3 @@ def run_bot(settings, obfuscation: ObfuscationLayer):
 def main(obfuscation: ObfuscationLayer):
     settings = load_settings()
     run_bot(settings, obfuscation)
-
