@@ -27,6 +27,7 @@ class Settings:
     smtp_port: int
 
     trusted_fingerprints: set[str]
+    obfuscation_layer: str
 
 def load_settings() -> Settings:
     raw = {
@@ -63,4 +64,5 @@ def load_settings() -> Settings:
             for value in raw["TRUSTED_FINGERPRINTS"].split(",")
             if value.strip()
         },
+        obfuscation_layer=raw.get("OBFUSCATION_LAYER", "pgp").strip().lower(),
     )
