@@ -1,7 +1,8 @@
 from email.message import EmailMessage
 from types import SimpleNamespace
+from unittest.mock import patch
 
-from email_bridge.bot.flow import process_email
+from email_bridge.bot.flow import process_email, run_telegram_parser
 from email_bridge.obfuscation.base import VerificationResult
 
 
@@ -98,3 +99,33 @@ def test_process_email_skips_untrusted_signer():
 
     assert sent["called"] is False
     assert imap.stored == []
+
+
+def test_run_telegram_parser_masks_output_in_github_actions():
+    proc = SimpleNamespace(returncode=0, stdout="bridge-1\nbridge-2\n", stderr="")
+
+    with (
+        patch("email_bridge.bot.flow.subprocess.run", return_value=proc),
+        patch("email_bridge.bot.flow.print") as print_mock,
+        patch.dict("os.environ", {"GITHUB_ACTIONS": "true"}, clear=False),
+    ):
+        out = run_telegram_parser()
+
+    assert out == "bridge-1\nbridge-2"
+    assert print_mock.call_count == 2
+    print_mock.assert_any_call("::add-mask::bridge-1")
+    print_mock.assert_any_call("::add-mask::bridge-2")
+
+
+def test_run_telegram_parser_does_not_log_parser_stdout_or_stderr_contents():
+    proc = SimpleNamespace(returncode=0, stdout="secret-bridge", stderr="secret-error")
+
+    with (
+        patch("email_bridge.bot.flow.subprocess.run", return_value=proc),
+        patch("email_bridge.bot.flow.logging.warning") as warn_mock,
+    ):
+        run_telegram_parser()
+
+    logged_text = "\n".join(str(call.args) for call in warn_mock.call_args_list)
+    assert "secret-bridge" not in logged_text
+    assert "secret-error" not in logged_text
