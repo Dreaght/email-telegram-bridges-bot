@@ -1,5 +1,6 @@
 import imaplib
 import logging
+import os
 import smtplib
 import subprocess
 import sys
@@ -41,13 +42,23 @@ def run_telegram_parser() -> str:
         text=True,
     )
 
-    logging.info("Telegram stdout:")
-    logging.info(proc.stdout)
+    if proc.returncode != 0:
+        logging.warning("Telegram parser exited with code %d", proc.returncode)
 
-    logging.info("Telegram stderr:")
-    logging.info(proc.stderr)
+    if proc.stderr.strip():
+        logging.warning("Telegram parser emitted stderr output (%d chars)", len(proc.stderr))
 
-    return proc.stdout.strip()
+    output = proc.stdout.strip()
+
+    # GitHub Actions can mask values from subsequent logs when they are registered
+    # with the add-mask command. Register each non-empty line to avoid leaks.
+    if output and os.getenv("GITHUB_ACTIONS", "").lower() == "true":
+        for line in output.splitlines():
+            line = line.strip()
+            if line:
+                print(f"::add-mask::{line}")
+
+    return output
 
 
 def send_email(settings, to_addr: str, body: str):
@@ -104,7 +115,7 @@ def process_email(
         return
 
     bridges = parser()
-    logging.info("Bridges output: %r", bridges)
+    logging.info("Bridges output present: %s", bool(bridges))
 
     if not bridges:
         logging.info("No bridges returned")
